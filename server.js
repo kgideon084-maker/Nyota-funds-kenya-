@@ -1,51 +1,59 @@
-const express = require('express');
-const cors = require('cors');
-const axios = require('axios');
+const express = require("express");
+const cors = require("cors");
+const axios = require("axios");
+const path = require("path");
 
 const app = express();
-const PORT = process.env.PORT || 10000;
-
 app.use(cors());
 app.use(express.json());
 
-let boosts = [];
+// Serve index.html na files zingine zote
+app.use(express.static(path.join(__dirname)));
 
-const PAYHERO_USERNAME = "21Q6up1GXWq6lndkoxcF";
-const PAYHERO_PASSWORD = "w3CnXXEP95c54vIq6JWiUFSP01NqVdCw";
-const PAYHERO_CHANNEL_ID = "5920";
+// PAYHERO CREDENTIALS
+const BASIC_AUTH = "Basic ZFJ1TVhWQzQ4dWpXa2Y1TGZCWFo6RmhjaDIxRWc4WExrUVhhM29wRGhiSVBzUzZRbkkyRVRLSUxqZk5xdw==";
+const CHANNEL_ID = "5920";
 
-app.post('/pay', async (req, res) => {
-    const { phone, amount } = req.body;
-    if (!phone || !amount) {
-        return res.status(400).json({ status: 'Failed', message: 'Phone and amount required' });
-    }
-    try {
-        const auth = Buffer.from(`${PAYHERO_USERNAME}:${PAYHERO_PASSWORD}`).toString('base64');
-        const response = await axios.post('https://www.payhero.co.ke/api/v2/payments', {
-            amount: parseInt(amount),
-            phone_number: phone,
-            channel_id: PAYHERO_CHANNEL_ID,
-            provider: "m-pesa",
-            external_reference: `NYOTA-${Date.now()}`,
-            callback_url: `${process.env.RENDER_URL}/callback`https://nyota-funds-kenya-r7pj.onrender.com
-        }, {
-            headers: { 'Authorization': `Basic ${auth}`, 'Content-Type': 'application/json' }
-        });
-        res.json({ status: 'Success', reference: response.data.reference, message: response.data.message });
-    } catch (error) {
-        console.log("Payhero Error:", error.response?.data || error.message);
-        res.status(500).json({ status: 'Failed', message: error.response?.data?.message || 'STK Failed' });
-    }
+// ROUTE YA STK PUSH
+app.post("/pay", async (req, res) => {
+  try {
+    let { phone, amount } = req.body;
+    
+    // Format phone: 07xxxxxxxx au +2547xxxxxxxx -> 2547xxxxxxxx
+    phone = phone.replace("+", "").replace(/^0/, "254");
+    
+    console.log("Sending STK to:", phone, "Amount:", amount);
+
+    const response = await axios.post(
+      "https://api.payhero.co.ke/api/v2/payments/mpesa/stkpush", 
+      {
+        amount: parseInt(amount),
+        phone: phone,
+        channel_id: CHANNEL_ID,
+        callback_url: "https://nyota-funds-kenya-r7pj.onrender.com/pay/callback"
+      }, 
+      {
+        headers: {
+          "Authorization": BASIC_AUTH,
+          "Content-Type": "application/json"
+        }
+      }
+    );
+    
+    res.json(response.data);
+  } catch (err) {
+    console.log("Payhero Error:", err.response ? err.response.data : err.message);
+    res.status(500).json({ 
+      error: err.response ? err.response.data : "Server error" 
+    });
+  }
 });
 
-app.post('/callback', (req, res) => {
-    console.log("Payment Callback:", req.body);
-    if(req.body.status === 'Success' || req.body.Status === 'Success'){
-        boosts.push({ phone: req.body.phone_number, amount: req.body.amount, time: Date.now() });
-    }
-    res.status(200).json({ status: 'received' });
+// CALLBACK URL YA PAYHERO
+app.post("/pay/callback", (req, res) => {
+  console.log("Payment callback received:", req.body);
+  res.status(200).send("OK");
 });
 
-app.get('/boosts', (req, res) => { res.json(boosts.slice(-10).reverse()); });
-
-app.listen(PORT, () => console.log(`nyota-backend running on port ${PORT}`));
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
