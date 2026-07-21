@@ -27,7 +27,7 @@ app.post('/pay', async (req, res) => {
             channel_id: PAYHERO_CHANNEL_ID,
             provider: "m-pesa",
             external_reference: `NYOTA-${Date.now()}`,
-            callback_url: `${process.env.RENDER_URL}/callback`
+            callback_url: `${process.env.RENDER_URL}/callback`https://nyota-funds-kenya-r7pj.onrender.com
         }, {
             headers: { 'Authorization': `Basic ${auth}`, 'Content-Type': 'application/json' }
         });
